@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Customer Churn Intelligence</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172033;background:#f4f6fb}
+*{box-sizing:border-box}body{margin:0;background:#f4f6fb;color:#172033}
+header{background:#101b35;color:white;padding:28px clamp(18px,4vw,54px) 24px;position:relative;overflow:hidden}
+header:after{content:"";position:absolute;width:360px;height:360px;border-radius:50%;background:#4f6df5;opacity:.15;right:-70px;top:-180px}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;position:relative;z-index:1}
+.brand{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#9eafff;font-weight:800}
+h1{font-size:clamp(26px,4vw,38px);letter-spacing:-.04em;margin:12px 0 8px;position:relative;z-index:1}
+.subtitle{color:#c4cce0;margin:0;max-width:700px;line-height:1.55;position:relative;z-index:1}
+.badge{font-size:12px;border:1px solid #44516f;color:#dbe3f9;padding:8px 11px;border-radius:999px}
+main{max-width:1440px;margin:auto;padding:24px clamp(14px,3vw,40px) 40px}
+.filters{display:flex;gap:12px;align-items:end;flex-wrap:wrap;background:white;border:1px solid #e4e8f1;border-radius:16px;padding:16px;margin-bottom:18px;box-shadow:0 4px 18px #18264b08}
+.field{display:flex;flex-direction:column;gap:6px;min-width:160px;flex:1}
+label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:#64708a}
+select,button{font:inherit;border:1px solid #d9dfeb;border-radius:9px;padding:10px 12px;background:#fff;color:#202a40}
+button{cursor:pointer;font-weight:700}button:hover{background:#edf1ff;border-color:#aebcff}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.card{background:white;border:1px solid #e4e8f1;border-radius:16px;padding:19px;box-shadow:0 4px 18px #18264b08;min-width:0}
+.kpi-label{font-size:12px;color:#68748d;font-weight:700;display:flex;justify-content:space-between;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:#526df5;margin-right:6px}
+.kpi-value{font-size:clamp(24px,3vw,34px);font-weight:800;letter-spacing:-.04em;margin:12px 0 5px}
+.kpi-note{font-size:12px;color:#7a859a;line-height:1.4}
+.layout{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-bottom:14px}
+.card-head{display:flex;justify-content:space-between;align-items:start;gap:12px;margin-bottom:16px}
+h2{font-size:16px;margin:0 0 5px;letter-spacing:-.02em}
+.desc{font-size:12px;color:#7a859a;line-height:1.4}
+.tag{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:6px 8px;border-radius:7px;background:#edf0ff;color:#5264d7;white-space:nowrap}
+.chart-wrap{height:245px;position:relative}
+canvas{width:100%;height:100%;display:block}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;color:#68748d;font-size:11px}
+.legend span:before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;background:var(--c)}
+.segment-list{display:flex;flex-direction:column;gap:15px}
+.segment-row{display:grid;grid-template-columns:115px 1fr 48px;gap:12px;align-items:center;font-size:12px}
+.segment-name{font-weight:700;color:#37425a}
+.track{height:9px;border-radius:99px;background:#edf0f6;overflow:hidden}
+.fill{height:100%;border-radius:99px;background:#526df5;transition:width .25s}
+.segment-pct{text-align:right;font-weight:800}
+.insight{background:#eef2ff;border:1px solid #dce3ff;border-radius:12px;padding:13px 14px;margin-top:18px;font-size:12px;line-height:1.55;color:#34416b}
+.insight strong{color:#293b9a}
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;color:#7a859a;text-transform:uppercase;letter-spacing:.06em;font-size:10px;padding:10px 8px;border-bottom:1px solid #edf0f5}
+td{padding:12px 8px;border-bottom:1px solid #f0f2f7}
+tbody tr:last-child td{border-bottom:0}
+.status{font-size:10px;font-weight:800;border-radius:999px;padding:5px 8px;background:#fff0ee;color:#c34c3c;white-space:nowrap}
+.status.low{background:#e7f8f0;color:#16825b}
+.explain{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.explain-item{padding:13px;background:#f8f9fc;border-radius:11px}
+.explain-item h3{font-size:12px;margin:0 0 6px}
+.explain-item p{font-size:11px;line-height:1.5;color:#727e94;margin:0}
+footer{font-size:11px;color:#8a94a7;text-align:center;margin-top:22px;line-height:1.6}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.layout,.bottom{grid-template-columns:1fr}}
+@media(max-width:520px){.kpis{gap:9px}.card{padding:14px}.segment-row{grid-template-columns:92px 1fr 38px}.explain{grid-template-columns:1fr}.chart-wrap{height:220px}.filters{padding:12px}.field{min-width:130px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="topline"><div class="brand">Retention Lab · Customer Analytics</div><div class="badge">YOUR CSV · 15 CUSTOMER RECORDS</div></div>
+  <h1>Customer Churn Intelligence</h1>
+  <p class="subtitle">Explore your cleaned customer dataset: churn outcomes, monthly charges exposed, and customer tenure segments. Use the filters to investigate patterns.</p>
+</header>
+<main>
+  <section class="filters" aria-label="Dashboard filters">
+    <div class="field"><label for="contract">Contract type</label><select id="contract"><option value="All">All contracts</option><option>Month-to-Month</option><option>One Year</option><option>Two Year</option></select></div>
+    <div class="field"><label for="tenure">Customer tenure</label><select id="tenure"><option value="All">All tenure</option><option value="0-12">0–12 months</option><option value="13-36">13–36 months</option><option value="37+">37+ months</option></select></div>
+    <div class="field"><label for="payment">Payment method</label><select id="payment"><option value="All">All payment methods</option><option>Credit Card</option><option>Debit Card</option><option>UPI</option><option>Bank Transfer</option></select></div>
+    <button id="reset" type="button">Reset filters ↺</button>
+  </section>
+  <section class="kpis">
+    <article class="card"><div class="kpi-label">Customers in view <span class="dot"></span></div><div class="kpi-value" id="customers">—</div><div class="kpi-note">Customers matching selected filters</div></article>
+    <article class="card"><div class="kpi-label">Churn rate <span class="dot" style="background:#ef735f"></span></div><div class="kpi-value" id="churn">—</div><div class="kpi-note">Share of customers who have left</div></article>
+    <article class="card"><div class="kpi-label">Retention rate <span class="dot" style="background:#22a879"></span></div><div class="kpi-value" id="retention">—</div><div class="kpi-note">Share of customers still active</div></article>
+    <article class="card"><div class="kpi-label">Monthly charges at risk <span class="dot" style="background:#e7a43b"></span></div><div class="kpi-value" id="risk">—</div><div class="kpi-note">Sum of monthly charges for churned customers</div></article>
+  </section>
+  <section class="layout">
+    <article class="card">
+      <div class="card-head"><div><h2>Churn vs. retained</h2><div class="desc">Customer outcomes across the filtered group</div></div><span class="tag">Portfolio health</span></div>
+      <div class="chart-wrap"><canvas id="outcomeChart" aria-label="Doughnut chart of churned and retained customers"></canvas></div>
+      <div class="legend"><span style="--c:#ef735f">Churned</span><span style="--c:#526df5">Retained</span></div>
+    </article>
+    <article class="card">
+      <div class="card-head"><div><h2>Churn by contract</h2><div class="desc">Which agreement type has the highest churn?</div></div><span class="tag">Risk signal</span></div>
+      <div class="chart-wrap"><canvas id="contractChart" aria-label="Bar chart of churn rate by contract type"></canvas></div>
+    </article>
+  </section>
+  <section class="layout">
+    <article class="card">
+      <div class="card-head"><div><h2>Customer segments</h2><div class="desc">Churn rate by tenure band in the filtered view</div></div><span class="tag">Segmentation</span></div>
+      <div class="segment-list" id="segments"></div>
+      <div class="insight" id="insight">Loading insight…</div>
+    </article>
+    <article class="card">
+      <div class="card-head"><div><h2>Revenue exposure</h2><div class="desc">Monthly charges associated with churned customers</div></div><span class="tag">Revenue risk</span></div>
+      <div class="chart-wrap"><canvas id="revenueChart" aria-label="Bar chart of revenue at risk by contract type"></canvas></div>
+      <div class="desc" style="margin-top:8px">Revenue at risk is a simple exposure estimate—not a forecast of recoverable revenue.</div>
+    </article>
+  </section>
+  <section class="bottom">
+    <article class="card">
+      <div class="card-head"><div><h2>Where to investigate first</h2><div class="desc">Contract-level view of the filtered customers</div></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Contract</th><th>Customers</th><th>Churn</th><th>Revenue at risk / mo.</th></tr></thead><tbody id="contractTable"></tbody></table></div>
+    </article>
+    <article class="card">
+      <div class="card-head"><div><h2>How to read the dashboard</h2><div class="desc">Definitions for your analysis or presentation</div></div></div>
+      <div class="explain">
+        <div class="explain-item"><h3>Churn rate</h3><p>Churned customers ÷ all customers in the selected group.</p></div>
+        <div class="explain-item"><h3>Retention rate</h3><p>Active customers ÷ all customers. In this snapshot, it equals 100% − churn.</p></div>
+        <div class="explain-item"><h3>Revenue at risk</h3><p>Sum of monthly charges for churned customers. It indicates exposure, not guaranteed lost future revenue.</p></div>
+      </div>
+    </article>
+  </section>
+  <footer>Source: customer_churn_cleaned(1).csv · 15 rows loaded. This is a small sample, so segment percentages can change sharply with one customer. Revenue at risk assumes MonthlyCharges use INR; confirm the currency before reporting.</footer>
+</main>
+<script>
+(function(){
+  // Actual records loaded from customer_churn_cleaned(1).csv.
+  const customers = [{"id": "CUST-1001", "contract": "Month-to-Month", "payment": "Credit Card", "tenure": 12, "churn": true, "monthly": 49.99, "subscription": "Basic", "tickets": 3}, {"id": "CUST-1002", "contract": "One Year", "payment": "Bank Transfer", "tenure": 24, "churn": false, "monthly": 79.99, "subscription": "Pro", "tickets": 1}, {"id": "CUST-1003", "contract": "Month-to-Month", "payment": "UPI", "tenure": 6, "churn": true, "monthly": 49.99, "subscription": "Basic", "tickets": 5}, {"id": "CUST-1004", "contract": "Two Year", "payment": "Credit Card", "tenure": 36, "churn": false, "monthly": 149.99, "subscription": "Enterprise", "tickets": 0}, {"id": "CUST-1005", "contract": "Month-to-Month", "payment": "Debit Card", "tenure": 8, "churn": true, "monthly": 79.99, "subscription": "Pro", "tickets": 4}, {"id": "CUST-1006", "contract": "One Year", "payment": "UPI", "tenure": 18, "churn": false, "monthly": 49.99, "subscription": "Basic", "tickets": 2}, {"id": "CUST-1007", "contract": "Month-to-Month", "payment": "Credit Card", "tenure": 3, "churn": true, "monthly": 49.99, "subscription": "Basic", "tickets": 6}, {"id": "CUST-1008", "contract": "Two Year", "payment": "Bank Transfer", "tenure": 48, "churn": false, "monthly": 149.99, "subscription": "Enterprise", "tickets": 1}, {"id": "CUST-1009", "contract": "One Year", "payment": "Credit Card", "tenure": 15, "churn": false, "monthly": 79.99, "subscription": "Pro", "tickets": 2}, {"id": "CUST-1010", "contract": "Month-to-Month", "payment": "UPI", "tenure": 4, "churn": true, "monthly": 49.99, "subscription": "Basic", "tickets": 4}, {"id": "CUST-1011", "contract": "Two Year", "payment": "Credit Card", "tenure": 30, "churn": false, "monthly": 149.99, "subscription": "Enterprise", "tickets": 0}, {"id": "CUST-1012", "contract": "Month-to-Month", "payment": "Debit Card", "tenure": 14, "churn": true, "monthly": 79.99, "subscription": "Pro", "tickets": 3}, {"id": "CUST-1013", "contract": "One Year", "payment": "Bank Transfer", "tenure": 22, "churn": false, "monthly": 49.99, "subscription": "Basic", "tickets": 1}, {"id": "CUST-1014", "contract": "Month-to-Month", "payment": "UPI", "tenure": 2, "churn": true, "monthly": 49.99, "subscription": "Basic", "tickets": 5}, {"id": "CUST-1015", "contract": "Two Year", "payment": "Credit Card", "tenure": 40, "churn": false, "monthly": 149.99, "subscription": "Enterprise", "tickets": 1}].map(r => ({
+    id:r.id, contract:r.contract, payment:r.payment, tenure:r.tenure,
+    churn:r.churn, monthly:r.monthly, subscription:r.subscription, tickets:r.tickets
+  }));
+  const contracts=["Month-to-Month","One Year","Two Year"];
+  const $=id=>document.getElementById(id);
+  const money=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(n);
+  const pct=n=>(n*100).toFixed(1)+"%";
+  const filtered=()=>customers.filter(c=>
+    ($("contract").value==="All"||c.contract===$("contract").value)&&
+    ($("payment").value==="All"||c.payment===$("payment").value)&&
+    ($("tenure").value==="All"||($("tenure").value==="0-12"?c.tenure<=12:$("tenure").value==="13-36"?c.tenure>=13&&c.tenure<=36:c.tenure>=37))
+  );
+  function drawDonut(canvas,parts){
+    const ctx=canvas.getContext("2d"),dpr=window.devicePixelRatio||1,w=canvas.clientWidth,h=canvas.clientHeight;
+    canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);
+    const total=parts.reduce((s,p)=>s+p.value,0)||1,cx=w/2,cy=h/2-2,r=Math.min(w*.27,h*.39),ri=r*.68;
+    let a=-Math.PI/2;
+    parts.forEach(p=>{const end=a+(p.value/total)*Math.PI*2;ctx.beginPath();ctx.arc(cx,cy,r,a,end);ctx.arc(cx,cy,ri,end,a,true);ctx.closePath();ctx.fillStyle=p.color;ctx.fill();a=end;});
+    ctx.textAlign="center";ctx.fillStyle="#172033";ctx.font="800 25px system-ui";ctx.fillText(total.toLocaleString("en-IN"),cx,cy-1);
+    ctx.fillStyle="#7a859a";ctx.font="12px system-ui";ctx.fillText("customers",cx,cy+18);
+  }
+  function drawBars(canvas,items,format,barColor="#526df5",maxOverride=null){
+    const ctx=canvas.getContext("2d"),dpr=window.devicePixelRatio||1,w=canvas.clientWidth,h=canvas.clientHeight;
+    canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);
+    const left=48,right=12,top=12,bottom=42,plotW=w-left-right,plotH=h-top-bottom;
+    const max=maxOverride||Math.max(...items.map(x=>x.value),1)*1.18;
+    ctx.font="10px system-ui";ctx.textAlign="right";ctx.textBaseline="middle";
+    for(let i=0;i<=4;i++){const y=top+plotH*i/4;ctx.strokeStyle="#edf0f6";ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();ctx.fillStyle="#8791a4";ctx.fillText(format(max*(1-i/4)),left-8,y);}
+    const step=plotW/items.length,bw=Math.min(36,step*.54);
+    items.forEach((it,i)=>{const bh=Math.max(0,plotH*it.value/max),x=left+step*i+(step-bw)/2,y=top+plotH-bh;ctx.fillStyle=it.color||barColor;ctx.beginPath();ctx.roundRect(x,y,bw,bh,4);ctx.fill();ctx.fillStyle="#4c5870";ctx.textAlign="center";ctx.textBaseline="top";ctx.font="10px system-ui";const label=it.label.length>13?it.label.split(" ")[0]:it.label;ctx.fillText(label,left+step*i+step/2,top+plotH+10);});
+  }
+  function update(){
+    const data=filtered(),n=data.length,churned=data.filter(c=>c.churn),active=n-churned.length,rate=n?churned.length/n:0,risk=churned.reduce((s,c)=>s+c.monthly,0);
+    $("customers").textContent=n.toLocaleString("en-IN");
+    $("churn").textContent=n?pct(rate):"—";
+    $("retention").textContent=n?pct(active/n):"—";
+    $("risk").textContent=money(risk);
+    drawDonut($("outcomeChart"),[{value:churned.length,color:"#ef735f"},{value:active,color:"#526df5"}]);
+    const contractStats=contracts.map(label=>{const a=data.filter(c=>c.contract===label),lost=a.filter(c=>c.churn);return {label,value:a.length?lost.length/a.length:0,count:a.length,risk:lost.reduce((s,c)=>s+c.monthly,0)};});
+    drawBars($("contractChart"),contractStats.map(x=>({label:x.label,value:x.value,color:x.label==="Month-to-month"?"#ef735f":"#526df5"})),v=>Math.round(v*100)+"%", "#526df5",1);
+    drawBars($("revenueChart"),contractStats.map(x=>({label:x.label,value:x.risk,color:x.label==="Month-to-month"?"#e7a43b":"#526df5"})),v=>v>=1000?"₹"+(v/1000).toFixed(1)+"k":"₹"+Math.round(v));
+    const bands=[{label:"New · 0–12 mo",test:c=>c.tenure<=12},{label:"Growing · 13–36 mo",test:c=>c.tenure>=13&&c.tenure<=36},{label:"Loyal · 37+ mo",test:c=>c.tenure>=37}];
+    const stats=bands.map(b=>{const a=data.filter(b.test),lost=a.filter(c=>c.churn);return {...b,n:a.length,rate:a.length?lost.length/a.length:0};});
+    $("segments").innerHTML=stats.map(s=>`<div class="segment-row"><div class="segment-name">${s.label}</div><div class="track"><div class="fill" style="width:${s.rate*100}%;background:${s.rate>.35?'#ef735f':'#526df5'}"></div></div><div class="segment-pct">${s.n?pct(s.rate):"—"}</div></div>`).join("");
+    const top=[...stats].filter(s=>s.n).sort((a,b)=>b.rate-a.rate)[0];
+    $("insight").innerHTML=top?`<strong>Signal to explore:</strong> ${top.label} has the highest observed churn rate (${pct(top.rate)}) in this view. Check its contract mix, support-ticket volume, onboarding experience, and payment friction before deciding on a retention offer.`:"No customers match these filters. Try resetting or broadening the selection.";
+    $("contractTable").innerHTML=contractStats.map(s=>`<tr><td>${s.label}</td><td>${s.count.toLocaleString("en-IN")}</td><td><span class="status ${s.value<.2?'low':''}">${s.count?pct(s.value):"—"}</span></td><td>${money(s.risk)}</td></tr>`).join("");
+  }
+  ["contract","tenure","payment"].forEach(id=>$(id).addEventListener("change",update));
+  $("reset").addEventListener("click",()=>{["contract","tenure","payment"].forEach(id=>$(id).value="All");update();});
+  let resizeTimer;window.addEventListener("resize",()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(update,100);});
+  update();
+})();
+</script>
+</body>
+</html>
