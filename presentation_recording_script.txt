@@ -1,0 +1,22 @@
+3-minute presentation script — Executive Analytics Capstone
+
+[0:00–0:20 | Opening]
+Hello. This capstone asks a practical business question: which customer groups should a fictional subscription team contact first to reduce avoidable churn? The goal is to prioritise a test, not to claim we can know exactly who will leave.
+
+[0:20–0:45 | Baseline]
+In this illustrative synthetic dataset of 1000 customers, churn is 22.0% and retention is 78.0%. Monthly charges associated with churned customers total about ₹187,876. That last number is an exposure measure only. It is not confirmed lost revenue, and the data is synthetic.
+
+[0:45–1:15 | Insight one: contract]
+The sample shows monthly-contract customers have a churn rate of 29.6%, compared with 10.7% for annual contracts. That difference helps define a group to investigate, but it does not show that the contract itself causes churn. I recommend testing a voluntary service check-in or save option with eligible monthly customers.
+
+[1:15–1:40 | Insight two: tenure]
+Customers with under 12 months of tenure show 27.9% churn, compared with 20.6% for customers with at least 24 months. This suggests an onboarding checkpoint may be useful. I would test check-ins around days 7, 30, and 60 and measure 90-day retention.
+
+[1:40–2:05 | Insight three: support]
+Customers with three or more recent support tickets show 23.1% churn, compared with 21.8% for customers with zero to two tickets. Repeat tickets may signal unresolved friction, but again, this is an association. A named case owner and root-cause review is a low-risk intervention to test.
+
+[2:05–2:35 | Expected impact]
+For planning only, the defined pilot cohort contains 251 customers and 70 of them are marked churned in this demo. Their associated monthly charges total ₹55,512. If an intervention preserved 5 to 10 percent of that exposure, the scenario would be roughly ₹2,776 to ₹5,551 per month. This is an assumption-based scenario, not a forecast.
+
+[2:35–3:00 | Recommendation and caveats]
+My recommendation is a four-to-six-week pilot with a holdout group, tracking 30-, 60-, and 90-day retention, contact cost, complaints, and net margin. Scale only if the measured incremental benefit is credible and positive. The current bundle uses synthetic data, so the results must be recalculated from the supplied task CSV before final submission. Thank you.
